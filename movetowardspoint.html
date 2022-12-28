@@ -1,0 +1,51 @@
+<html>
+<head>
+
+</head>
+<body>
+<script>
+function calculatepointslope()
+{
+  pointdistancesq=Math.pow(x-x2,2)+Math.pow(y-y2,2);
+  pointdistance=Math.pow(pointdistancesq,0.5);
+  xslope=(x2-x)/pointdistance;
+  yslope=(y2-y)/pointdistance;
+}
+function moveposition()
+{
+  x=x+xslope*movespeed;
+  y=y+yslope*movespeed;
+  pointdistancesq=Math.pow(x-x2,2)+Math.pow(y-y2,2);
+  pointdistance=Math.pow(pointdistancesq,0.5);
+  if(pointdistance<movespeed)
+  {
+    document.writeln("<b>MADE IT TO "+(curpoint+1)+"</b><br>");
+    x=x2;
+    y=y2;
+    curpoint+=1;
+    if(curpoint<7)
+    {
+      x2=xs[curpoint];
+      y2=ys[curpoint];
+      calculatepointslope();
+    }
+  }
+}
+var movespeed=15;
+var xs=[800,600,400,200,200,0,600];
+var ys=[400,200,400,600,200,400,600];
+var x=xs[0];
+var y=ys[0];
+var x2=xs[0];
+var y2=ys[0];
+var xslope=0;
+var yslope=0;
+var curpoint=0;
+var pointdistance=1000000;
+while(curpoint<7)
+{
+  moveposition();
+}
+</script>
+</body>
+</html>

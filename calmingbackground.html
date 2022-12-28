@@ -1,0 +1,94 @@
+<html>
+<head>
+<style type='text/css'>
+body
+{
+  background-color: black;
+}
+</style>
+</head>
+<body>
+  <canvas id="canvasDemo" width="1500" height="900">
+  Sorry, your browser does not support canvas.
+  </canvas>
+<script>
+  function componentToHex(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+  }
+
+  function rgbToHex(r, g, b) {
+    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+  }
+  function calculatecolorslope()
+  {
+    colordistancesq=Math.pow(red-r2,2)+Math.pow(green-g2,2)+Math.pow(blue-b2,2);
+    colordistance=Math.pow(colordistancesq,0.5);
+    rslope=(r2-red)/colordistance;
+    gslope=(g2-green)/colordistance;
+    bslope=(b2-blue)/colordistance;
+  }
+  function movecolor()
+  {
+    red=red+rslope*colorspeed;
+    green=green+gslope*colorspeed;
+    blue=blue+bslope*colorspeed;
+    colordistancesq=Math.pow(red-r2,2)+Math.pow(green-g2,2)+Math.pow(blue-b2,2);
+    colordistance=Math.pow(colordistancesq,0.5);
+    if(colordistance<colorspeed)
+    {
+      //document.writeln("<b>MADE IT TO "+(curcolor+1)+"</b><br>");
+      red=r2;
+      green=g2;
+      blue=b2;
+      curcolor+=1;
+      if(curcolor==reds.length)
+      {
+        curcolor=0;
+      }
+      r2=reds[curcolor];
+      g2=greens[curcolor];
+      b2=blues[curcolor];
+      calculatecolorslope();
+    }
+  }
+  function draw()
+  {
+    //alert("Move Position");
+    if(changingcolor)
+    {
+      movecolor();
+    }
+    //alert(red+','+green+','+blue)
+    var myhex=rgbToHex(Math.floor(red),Math.floor(green),Math.floor(blue));
+    //alert("Draw");
+    ctx.fillStyle=myhex;
+    ctx.fillRect(0,0,1500,700);
+  }
+
+  var canvas=document.getElementById("canvasDemo");
+  var ctx=canvas.getContext("2d");
+
+  var changingcolor=true;
+  var colorspeed=1;
+  //Calming blues
+  var reds=[224, 95, 135, 240, 141, 187, 72, 188, 0, 0, 176, 92, 0, 0, 0, 135, 72, 185, 0, 191, 24];
+  var greens=[255, 158, 206, 248, 238, 255, 209, 210, 0, 245, 224, 172, 191, 0, 255, 206, 118, 211, 0, 239, 116];
+  var blues=[255, 160, 255, 255, 238, 255, 204, 238, 238, 255, 230, 238, 255, 205, 255, 250, 255, 238, 128, 255, 205];
+
+  var red=reds[0];
+  var green=greens[0];
+  var blue=blues[0];
+  var r2=reds[0];
+  var g2=greens[0];
+  var b2=blues[0];
+  var rslope=0;
+  var gslope=0;
+  var bslope=0;
+  var curcolor=0;
+  var colordistance=1000000;
+  var colordistancesq=1000000;
+  var myVar = setInterval(draw, 15);
+</script>
+</body>
+</html>
