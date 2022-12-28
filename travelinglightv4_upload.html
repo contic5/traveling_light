@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style type='text/css'>
+body
+{
+  background-color: black;
+  color:white;
+}
+</style>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+  <h1>Traveling Light</h1>
+  <br>
+  <form>
+  Shape<br>
+  <select id='shapeselect' name='shapeselect'>
+    <option value='-1'>Infinity</option>
+    <option value='0'>Spiral</option>
+    <option value='1'>Circle</option>
+    <option value='2'>Complicated Cycle</option>
+    <option value='3'>Star</option>
+    <option value='4'>Simple Cycle</option>
+    <option value='5'>Wave</option>
+    <option value='6'>Figure 8</option>
+    <option value='7'>Very Complicated Cycle</option>
+    <option value='8'>Another Complicated Cycle</option>
+    <option value='9'>Candy</option>
+    <option value='10'>Hourglass</option>
+    <option value='11'>Butterfly</option>
+    <option value='12'>Complicated Butterfly</option>
+    <option value='13'>Demonic Star</option>
+    <option value='14'>Nucleus</option>
+  </select>
+  <br>
+  Color<br>
+  <select id='colorselect' name='colorselect'>
+    <option value='-1'>Rainbow</option>
+    <option value='0'>Burning</option>
+    <option value='1'>Calming Blues</option>
+    <option value='2'>Matrix</option>
+    <option value='3'>Dark Colors</option>
+    <option value='4'>Demonic Colors</option>
+  </select>
+  <br>
+  Color Speed<br>
+  <input type="range" min="0" max="5" value="2" step=0.5 id="colorslider"><br>
+  Movement Speed<br>
+  <input type="range" min="0" max="9" value="5" step=0.5 id="movementslider"><br>
+  </form>
+<canvas id="lightcanvas" width='1500' height="900">
+Sorry, your browser does not support canvas.
+</canvas>
+<script>
+var canvas=document.getElementById("lightcanvas");
+var ctx=canvas.getContext("2d");
+function calculatepointslope(p)
+{
+  /*
+  alert(pointdistancesq[p]+" "+p);
+  alert(x[p]+" "+p);
+  alert(xd[p]+" "+p);
+  */
+  pointdistancesq[p]=Math.pow(x[p]-xd[p],2)+Math.pow(y[p]-yd[p],2);
+  //alert("DistanceSQ for "+p+" is "+pointdistancesq[p]);
+  pointdistance[p]=Math.pow(pointdistancesq[p],0.5);
+  if(pointdistance[p]==0)
+  {
+    xslope[p]=0;
+    yslope[p]=0;
+  }
+  else
+  {
+    xslope[p]=(xd[p]-x[p])/pointdistance[p];
+    yslope[p]=(yd[p]-y[p])/pointdistance[p];
+  }
+  //alert("Slope for "+p+" is "+xslope[p]+","+yslope[p]);
+}
+function moveposition(p,movespeed)
+{
+  x[p]=x[p]+xslope[p]*movespeed;
+  y[p]=y[p]+yslope[p]*movespeed;
+  pointdistancesq[p]=Math.pow(x[p]-xd[p],2)+Math.pow(y[p]-yd[p],2);
+  pointdistance[p]=Math.pow(pointdistancesq[p],0.5);
+  if(pointdistance[p]==0||pointdistance[p]>prevpointdistance[p])
+  {
+    //alert(pointdistance[p]+" "+(pointdistance[p]>prevpointdistance[p]));
+    x[p]=xd[p];
+    y[p]=yd[p];
+    curpoint[p]+=1;
+    if(curpoint[p]==xs.length)
+    {
+      curpoint[p]=0;
+    }
+    xd[p]=xs[curpoint[p]];
+    yd[p]=ys[curpoint[p]];
+    calculatepointslope(p);
+  }
+  prevpointdistance[p]=pointdistance[p];
+}
+function calculatecolorslope()
+{
+  colordistancesq=Math.pow(red-r2,2)+Math.pow(green-g2,2)+Math.pow(blue-b2,2);
+  colordistance=Math.pow(colordistancesq,0.5);
+  rslope=(r2-red)/colordistance;
+  gslope=(g2-green)/colordistance;
+  bslope=(b2-blue)/colordistance;
+}
+function movecolor()
+{
+  red=red+rslope*colorspeed;
+  green=green+gslope*colorspeed;
+  blue=blue+bslope*colorspeed;
+  colordistancesq=Math.pow(red-r2,2)+Math.pow(green-g2,2)+Math.pow(blue-b2,2);
+  colordistance=Math.pow(colordistancesq,0.5);
+  if(colordistance<colorspeed)
+  {
+    //document.writeln("<b>MADE IT TO "+(curcolor+1)+"</b><br>");
+    red=r2;
+    green=g2;
+    blue=b2;
+    curcolor+=1;
+    if(curcolor==reds.length)
+    {
+      curcolor=0;
+    }
+    r2=reds[curcolor];
+    g2=greens[curcolor];
+    b2=blues[curcolor];
+    calculatecolorslope();
+  }
+}
+function draw()
+{
+  //alert("Move Position");
+  for(i=0;i<totalpoints;i++)
+  {
+    moveposition(i,movespeed);
+  }
+  if(changingcolor)
+  {
+    movecolor();
+  }
+  var myhex=rgbToHex(Math.floor(red),Math.floor(green),Math.floor(blue));
+  //alert("Draw");
+  for(var i=0;i<totalpoints;i+=1)
+  {
+      if(i%2==0)
+      {
+        if(deleting==true)
+        {
+          ctx.fillStyle='#000000';
+          ctx.beginPath();
+          ctx.arc(x[i]+xoffset, y[i]+yoffset, radius, 0, 2 * Math.PI);
+          ctx.fill();
+          ctx.stroke();
+        }
+      }
+      else
+      {
+        ctx.fillStyle=myhex;
+        ctx.beginPath();
+        ctx.arc(x[i]+xoffset, y[i]+yoffset, radius, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+  }
+}
+function componentToHex(c) {
+  var hex = c.toString(16);
+  return hex.length == 1 ? "0" + hex : hex;
+}
+
+function rgbToHex(r, g, b) {
+  return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+function gettotaldistance(xpoints,ypoints)
+{
+  totaldistance=0;
+  var last=xpoints.length-1;
+  var curpointdistance=0;
+  var curpointdistancesq=0;
+  for(var i=0;i<xpoints.length-1;i++)
+  {
+    curpointdistancesq=Math.pow(xpoints[i]-xpoints[i+1],2)+Math.pow(ypoints[i]-ypoints[i+1],2);
+    curpointdistance=Math.pow(curpointdistancesq,0.5);
+    totaldistance+=curpointdistance;
+  }
+  curpointdistancesq=Math.pow(xpoints[0]-xpoints[last],2)+Math.pow(ypoints[0]-ypoints[last],2);
+  curpointdistance=Math.pow(curpointdistancesq,0.5);
+  totaldistance+=curpointdistance;
+  return totaldistance;
+}
+function setinitialcolors(selectedcolors)
+{
+  if(selectedcolors==0)
+  {
+    reds=[255, 255, 255, 238, 238, 255, 238, 255, 255, 255, 255, 238, 255, 255, 255, 255, 255];
+    greens=[255, 246, 0, 44, 92, 130, 59, 106, 127, 185, 255, 106, 140, 69, 165, 255, 255];
+    blues=[240, 143, 0, 44, 66, 71, 59, 106, 36, 15, 224, 80, 0, 0, 79, 255, 0];
+  }
+  else if(selectedcolors==1)
+  {
+    reds=[224, 95, 135, 240, 141, 187, 72, 188, 0, 0, 176, 92, 0, 0, 0, 135, 72, 185, 0, 191, 24];
+    greens=[255, 158, 206, 248, 238, 255, 209, 210, 0, 245, 224, 172, 191, 0, 255, 206, 118, 211, 0, 239, 116];
+    blues=[255, 160, 255, 255, 238, 255, 204, 238, 238, 255, 230, 238, 255, 205, 255, 250, 255, 238, 128, 255, 205];
+  }
+  else if(selectedcolors==2)
+  {
+    reds=[0, 0, 0];
+    greens=[255, 143, 59];
+    blues=[65, 17, 0];
+  }
+  else if(selectedcolors==3)
+  {
+    reds=[102,102,0,0,0];
+    greens=[0,0,0,51,51];
+    blues=[0,102,102,102,0];
+  }
+  else if(selectedcolors==4)
+  {
+    reds=[102,255,77,230,255];
+    greens=[0,0,0,92,255];
+    blues=[0,0,77,0,255];
+  }
+  else
+  {
+      reds=[255,255,255,0,0,75,148];
+      greens=[0,127,255,255,0,0,0];
+      blues=[0,0,0,0,255,130,211];
+  }
+  red=reds[0];
+  green=greens[0];
+  blue=blues[0];
+  r2=reds[0];
+  g2=greens[0];
+  b2=blues[0];
+  rslope=0;
+  gslope=0;
+  bslope=0;
+  curcolor=0;
+  colordistance=1000000;
+  colordistancesq=1000000;
+}
+function setinitialpositions(selectedpattern)
+{
+  if(selectedpattern==0)
+  {
+    //Spiral
+    xs=[350,
+    337,325,314,307,307,315,329,350,372,394,412,420,418,404,381,349,316,285,261,251,
+    255,275,308,350,394,434,464,477,470,444,402,349,294,245,209,194,203,235,286,350,
+    416,474,516,533,523,484,424,350,272,205,157,137,150,195,264,349,437,514,568,590,
+    575,524,446,350,251,165,105,81,98,155,243,349,459,554,621,646,627,564,467,350,
+    229,125,52,24,46,115,221,349];
+    ys=[321,
+    320,325,335,349,367,384,398,406,405,394,375,349,321,295,274,265,268,285,313,350,
+    389,424,451,463,457,434,397,349,299,255,222,208,216,245,291,350,410,464,503,519,
+    509,474,418,350,278,215,170,152,163,205,270,349,432,504,555,576,562,514,440,350,
+    256,175,118,95,111,165,248,349,454,544,607,632,614,554,462,350,235,135,65,38,
+    59,125,226,349,475,584,660,689];
+  }
+  else if(selectedpattern==1)
+  {
+    //Circle
+    xs=[350,
+    413,474,530,579,620,650,668,675,668,650,620,579,530,474,413,349,286,225,169,120,
+    79,49,31,25,31,49,79,120,169,225,286];
+    ys=[675,
+    668,650,620,579,530,474,413,350,286,225,169,120,79,49,31,25,31,49,79,120,
+    169,225,286,350,413,474,530,579,620,650,668];
+
+  }
+  else if(selectedpattern==2)
+  {
+    //Complicated cycle
+    xs=[350,
+    474,579,650,675,650,579,474,350,225,120,49,25,49,120,225,350,474,579,650,675,
+    650,579,474,349,225,120,49,25,49,120,225,350,474,579,650,675,650,579,474,349,
+    225,120,49,25,49,120,225,350,474,579,650,675,650,579,474,350,225,120,49,25,
+    49,120,225,349];
+    ys=[350,
+    503,620,673,650,556,413,255,120,38,31,98,225,381,530,636,675,636,530,381,225,
+    98,31,38,120,255,413,556,650,673,620,503,349,196,79,26,49,143,286,444,579,
+    661,668,601,474,318,169,63,25,63,169,318,474,601,668,661,579,444,286,143,49,
+    26,79,196,349];
+
+  }
+  else if(selectedpattern==3)
+  {
+    //Star
+    xs=[700,
+    350,0,306,612,481,350,219,88,394,700];
+    ys=[272,
+    272,272.,476,680,340,0,340.,680,476,272];
+  }
+  else if(selectedpattern==4)
+  {
+    //Simple cycle
+    xs=[360,
+    493,607,683,710,683,607,493,360,226,112,36,10,36,112,226,360,493,607,683,710,
+    683,607,493,359,226,112,36,10,36,112,226];
+    ys=[360,
+    554,683,703,607,428,226,68,10,68,226,428,607,703,683,554,359,165,36,16,112,
+    291,493,651,710,651,493,291,112,16,36,165];
+  }
+  else if(selectedpattern==5)
+  {
+    //Wave
+    xs=[0,
+    10,21,32,43,53,64,75,86,97,107,118,129,140,151,161,172,183,194,205,215,
+    226,237,248,259,269,280,291,302,313,323,334,345,356,367,377,388,399,410,421,431,
+    442,453,464,475,485,496,507,518,529,539,550,561,572,583,593,604,615,626,637,647,
+    658,669,680,691];
+    ys=[700,
+    674,598,484,350,217,103,27,0,27,103,217,350,484,598,674,700,674,598,484,350,
+    217,103,27,0,27,103,217,351,484,598,674,700,674,598,484,350,217,103,27,0,
+    27,103,217,351,484,598,674,700,674,598,484,350,217,103,27,0,27,103,217,350,
+    484,598,674,700];
+  }
+  else if(selectedpattern==6)
+  {
+    //Figure 8
+    xs=[0,700,700,0,0,700,700,0,0];
+    ys=[700,700,350,350,0,0,350,350,0];
+  }
+  else if(selectedpattern==7)
+  {
+    xs=[26,
+    3,1,20,58,114,185,264,350,435,514,585,641,679,698,696,673,631,572,499,418,
+    332,248,170,102,49,15,0,6,33,79,141,216,298,384,467,544,609,658,689,700,
+    689,658,609,544,467,384,298,216,141,79,33,6,0,15,49,102,170,248,332,418,
+    499,572,631,673,696,698,679,641,585,514,435,350,264,185,114,58,20,1,3,26,
+    68,127,200,281,367,451,529,597,650,684,699,693,666,620,558,483,401,315,232,155,
+    90,41,10,0,10,41,90,155,232,315,401,483,558,620,666,693,699,684,650,597,
+    529,451,367,281,200,127,68,26];
+    ys=[102,
+    41,6,1,26,79,155,248,350,451,544,620,673,698,693,658,597,514,418,315,216,
+    127,58,15,0,15,58,127,216,315,418,514,597,658,693,698,673,620,544,451,349,
+    248,155,79,26,1,6,41,102,185,281,384,483,572,641,684,700,684,641,572,483,
+    384,281,185,102,41,6,1,26,79,155,248,349,451,544,620,673,698,693,658,597,
+    514,418,315,216,127,58,15,0,15,58,127,216,315,418,514,597,658,693,698,673,
+    620,544,451,350,248,155,79,26,1,6,41,102,185,281,384,483,572,641,684,700,
+    684,641,572,483,384,281,185,102];
+  }
+  else if(selectedpattern==8)
+  {
+    xs=[0,
+    26,102,216,350,483,597,673,700,673,597,483,350,216,102,26,0,26,102,216,350,
+    483,597,673,700,673,597,483,349,216,102,26,0,26,102,216,350,483,597,673,700,
+    673,597,483,349,216,102,26,0,26,102,216,350,483,597,673,700,673,597,483,350,
+    216,102,26,0];
+    ys=[483,
+    572,641,684,700,684,641,572,483,384,281,185,102,41,6,1,26,79,155,248,350,
+    451,544,620,673,698,693,658,597,514,418,315,216,127,58,15,0,15,58,127,216,
+    315,418,514,597,658,693,698,673,620,544,451,349,248,155,79,26,1,6,41,102,
+    185,281,384,483];
+  }
+  else if(selectedpattern==9)
+  {
+    xs=[1154,
+1174,1188,1197,1200,1197,1188,1174,1154,1129,1098,1063,1024,980,933,882,829,774,717,658,599,
+541,482,425,370,317,266,219,175,136,101,70,45,25,11,2,0,2,11,25,45,
+70,101,136,175,219,266,317,370,425,482,541,600,658,717,774,829,882,933,980,1024,
+1063,1098,1129,1154];
+ys=[0,
+26,102,216,350,483,597,673,700,673,597,483,350,216,102,26,0,26,102,216,350,
+483,597,673,700,673,597,483,349,216,102,26,0,26,102,216,350,483,597,673,700,
+673,597,483,349,216,102,26,0,26,102,216,350,483,597,673,700,673,597,483,350,
+216,102,26,0];
+  }
+  else if(selectedpattern==10)
+  {
+    xs=[249,
+  92,73,227,500,772,926,907,750,554,426,418,499,581,573,445,250,92,73,227,500,
+  772,926,907,749,554,426,418,500,581,573,445,249,92,73,227,500,772,926,907,749,
+  554,426,418,500,581,573,445,249,92,73,227,500,772,926,907,750,554,426,418,499,
+  581,573,445,250];
+  ys=[426,
+  457,480,495,500,495,480,457,426,388,345,298,250,201,154,111,73,42,19,4,0,
+  4,19,42,73,111,154,201,250,298,345,388,426,457,480,495,500,495,480,457,426,
+  388,345,298,249,201,154,111,73,42,19,4,0,4,19,42,73,111,154,201,249,
+  298,345,388,426];
+  }
+  else if(selectedpattern==11)
+  {
+    xs=[102,
+    155,216,281,350,418,483,544,597,641,673,693,700,693,673,641,597,544,483,418,349,
+    281,216,155,102,58,26,6,0,6,26,58,102,155,216,281,350,418,483,544,597,
+    641,673,693,700,693,673,641,597,544,483,418,349,281,216,155,102,58,26,6,0,
+    6,26,58,102];
+    ys=[40,
+    82,137,201,269,336,400,455,497,525,537,534,516,486,448,406,363,325,295,275,269,
+    275,295,325,363,406,448,486,516,534,537,525,497,455,400,336,268,201,137,82,40,
+    12,0,3,21,51,89,131,174,212,242,262,268,262,242,212,174,131,89,51,21,
+    3,0,12,40];
+  }
+  else if(selectedpattern==12)
+  {
+    xs=[26,
+79,155,248,350,451,544,620,673,698,693,658,597,514,418,315,216,127,58,15,0,
+15,58,127,216,315,418,514,597,658,693,698,673,620,544,451,349,248,155,79,26,
+1,6,41,102,185,281,384,483,572,641,684,700,684,641,572,483,384,281,185,102,
+41,6,1,26];
+ys=[51,
+91,159,248,350,451,540,608,648,657,635,588,525,454,387,333,298,285,293,317,350,
+382,406,414,401,366,312,245,174,111,64,42,51,91,159,248,350,451,540,608,648,
+657,635,588,524,454,387,333,298,285,293,317,350,382,406,414,401,366,312,245,175,
+111,64,42,51];
+  }
+  else if(selectedpattern==13)
+  {
+    //Star
+    xs=[700,350,0,306,612,481,
+      350,
+      216,102,26,0,26,102,216,350,483,597,673,700,673,597,483,350,
+      219,88,394,700];
+
+    ys=[428, 428, 428.0, 224, 0,360,
+      700,
+      674,598,484,351,217,103,27,0,27,103,217,351,484,598,674,700,
+      360.0, 20, 224, 428];
+
+  }
+  else if(selectedpattern==14)
+  {
+    xs=[26,
+79,155,248,350,451,544,620,673,698,693,658,597,514,418,315,216,127,58,15,0,
+15,58,127,216,315,418,514,597,658,693,698,673,620,544,451,349,248,155,79,26,
+1,6,41,102,185,281,384,483,572,641,684,700,684,641,572,483,384,281,185,102,
+41,6,1,26];
+ys=[102,
+155,216,281,350,418,483,544,597,640,672,692,699,692,672,640,597,544,483,418,349,
+281,216,155,102,59,27,7,0,7,27,59,102,155,216,281,350,418,483,544,597,
+640,672,692,699,692,672,640,597,544,483,418,349,281,216,155,102,59,27,7,0,
+7,27,59,102];
+  }
+  else
+  {
+    //Infinity
+    xs=[350,
+    413,474,530,579,620,650,668,675,668,650,620,579,530,474,413,349,286,225,169,120,
+    79,49,31,25,31,49,79,120,169,225,286];
+    ys=[350,
+    412,464,500,512,500,464,412,350,287,235,199,187,199,235,287,350,412,464,500,512,
+    500,464,412,349,287,235,199,187,199,235,287];
+  }
+}
+function setpoints()
+{
+  for(var i=0;i<totalpoints;i++)
+  {
+    curpoint[i]=0;
+    x[i]=xs[curpoint[i]];
+    y[i]=ys[curpoint[i]];
+    xd[i]=xs[curpoint[i]];
+    yd[i]=ys[curpoint[i]];
+    xslope[i]=0;
+    yslope[i]=0;
+    pointdistancesq[i]=1000000;
+    pointdistance[i]=1000;
+    prevpointdistance[i]=10;
+    var distancetomove=i*totaldistance/(totalpoints-5);
+    /*
+    if(i==0)
+      alert(distancetomove+","+totaldistance);
+    if(i==totalpoints-1)
+      alert(distancetomove+","+totaldistance);
+    */
+    while(distancetomove>movespeed)
+    {
+      moveposition(i,movespeed);
+      movement[i]+=movespeed;
+      distancetomove-=movespeed;
+    }
+    moveposition(i,distancetomove);
+    movement[i]+=Math.floor(distancetomove);
+  }
+}
+function setup(selectedpattern)
+{
+  ctx.clearRect(0,0,1500,900);
+  xs=[];
+  ys=[];
+  setinitialpositions(selectedpattern);
+
+  totalpoints=64;
+  x=new Array(totalpoints).fill(0);
+  y=new Array(totalpoints).fill(0);
+  xd=new Array(totalpoints).fill(0);
+  yd=new Array(totalpoints).fill(0);
+  xslope=new Array(totalpoints).fill(0);
+  yslope=new Array(totalpoints).fill(0);
+  curpoint=new Array(totalpoints).fill(0);
+  pointdistancesq=new Array(totalpoints).fill(0);
+  pointdistance=new Array(totalpoints).fill(0);
+  prevpointdistance=new Array(totalpoints).fill(0);
+  xoffset=300;
+  yoffset=100;
+  totaldistance=gettotaldistance(xs,ys);
+  movement=new Array(totalpoints).fill(0);
+  radius=8;
+  setpoints();
+}
+$("#shapeselect").change(function()
+{
+  var shapeselect=$('#shapeselect').find(":selected").val();
+  setup(shapeselect);
+});
+$("#colorselect").change(function()
+{
+  var colorselect=$('#colorselect').find(":selected").val();
+  setinitialcolors(colorselect);
+});
+
+var movespeed=5;
+var selectedpattern=-1;
+var xs=[];
+var ys=[];
+var deleting=true;
+var changingcolor=true;
+
+var totalpoints=64;
+var x=new Array(totalpoints).fill(0);
+var y=new Array(totalpoints).fill(0);
+var xd=new Array(totalpoints).fill(0);
+var yd=new Array(totalpoints).fill(0);
+var xslope=new Array(totalpoints).fill(0);
+var yslope=new Array(totalpoints).fill(0);
+var curpoint=new Array(totalpoints).fill(0);
+var pointdistancesq=new Array(totalpoints).fill(0);
+var pointdistance=new Array(totalpoints).fill(0);
+var prevpointdistance=new Array(totalpoints).fill(0);
+var xoffset=100;
+var yoffset=100;
+var totaldistance=gettotaldistance(xs,ys);
+var movement=new Array(totalpoints).fill(0);
+
+setup(selectedpattern);
+
+var colorspeed=1.5;
+var reds=[255,255,255,0,0,75,148];
+var greens=[0,127,255,255,0,0,0];
+var blues=[0,0,0,0,255,130,211];
+var red=reds[0];
+var green=greens[0];
+var blue=blues[0];
+var r2=reds[0];
+var g2=greens[0];
+var b2=blues[0];
+var rslope=0;
+var gslope=0;
+var bslope=0;
+var curcolor=0;
+var colordistance=1000000;
+var colordistancesq=1000000;
+
+var radius=8;
+for(var i=0;i<totalpoints;i++)
+{
+  calculatepointslope(i);
+}
+var myVar = setInterval(draw, 10);
+
+$( "#colorslider" ).on( "input", function()
+{
+  var val = $("#colorslider").val();
+  colorspeed=val;
+});
+$( "#movementslider" ).on( "input", function()
+{
+  var val = $("#movementslider").val();
+  movespeed=val;
+});
+</script>
+</body>
+</html>
